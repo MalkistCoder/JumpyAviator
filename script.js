@@ -42,8 +42,9 @@ class Player {
         this._vy -= 1.7
 
         // Collision detection
+
+        // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
         for (var obstacle of obstacles) {
-            // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
             if (
                 // Box 1 (top part)
                 (player.x < obstacle.x &&
@@ -59,9 +60,9 @@ class Player {
             ) {
                 console.log('collision detected')
                 this._dead = true
-                break
             }
         }
+
     }
     draw() {
         ctx.fillStyle = this._color
@@ -77,7 +78,7 @@ class Obstacle {
         this._color = 'green'
     }
     tick() {
-        this.x -= 5
+        this.x -= 6.5
     }
     draw() {
         ctx.fillStyle = this._color
@@ -95,6 +96,9 @@ obstacles.unshift(new Obstacle(canvas.width/5*5, Math.floor(Math.random() * ((ca
 obstacles.unshift(new Obstacle(canvas.width/5*6, Math.floor(Math.random() * ((canvas.height*3)/4 - canvas.height/4 + 1) + canvas.height/4)))
 
 const player = new Player(obstacles[obstacles.length-1].y-110,60,'#ffe135')
+
+let score = 0
+
 
 canvas.addEventListener('mousedown', function(e) {
     player.jump()
@@ -122,8 +126,13 @@ function animate() {
         if (obstacle.x < 0) { // Moved off screen, we can move back to the other side and randomize the y.
             obstacle.x = canvas.width+obstacle.width
             obstacle.y = Math.floor(Math.random() * ((canvas.height*3)/4 - canvas.height/4 + 1) + canvas.height/4)
+            score++
         }
     })
+
+    if (document.querySelector('#scoreValue') != score) {
+        document.querySelector('#scoreValue').innerText = score
+    }
 
     if (!player._dead) {
         setTimeout(function () {
