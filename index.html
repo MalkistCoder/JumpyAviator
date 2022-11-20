@@ -8,6 +8,15 @@
     </head>
     <body>
         <canvas id="game">Hey, your browser isn't cool enough. Please switch to a more modern browser that supports JavaScript and the canvas tag, like Google Chrome or Firefox.</canvas>
-        <span id="score">Score: <span id="scoreValue">0</span></span>
+        <div class="score">
+            <span>Score: <span id="scoreValue">0</span></span>
+            <br>
+            <span class='highscore'>Highscore: <span id="highscoreValue">0</span></span>
+        </div>
+        <div class="deathMessage" id="deathMessage">
+            <span class="diedMessage">You died!</span>
+            <br>
+            <span class="restartMessage">Click any key to restart.</span>
+        </div>
     </body>
 </html>
