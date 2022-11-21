@@ -22,6 +22,33 @@ window.addEventListener('mousemove', function(e) {
 
 // k actual code starts now
 
+// Cookie management for the highscore
+function createCookie(k,v,_delete=false) {
+    let expirationDate = new Date()
+    if (!_delete) {
+        expirationDate.setTime(4099680000000)
+    } else {
+        expirationDate.setTime(0)
+    }
+    document.cookie = `${k}=${v}; expires=${expirationDate.toUTCString()}; path=/;`
+}
+function getCookies() {
+    // https://stackoverflow.com/questions/5047346/converting-strings-like-document-cookie-to-objects
+    const cookies = document.cookie
+    let cookiesArr = cookies.split('; ')
+    let cookiesObj = cookiesArr.reduce(function(solvedCookies, keyValuePair) {
+        let splitKVPair = keyValuePair.split('=')
+        solvedCookies[splitKVPair[0]] = splitKVPair[1]
+        return solvedCookies
+    },{})
+    return cookiesObj
+}
+function getCookie(v) {
+    const allCookies = getCookies()
+    return allCookies[v]
+}
+
+
 class Player {
     constructor(y,size,color) {
         this.x = canvas.width/5
@@ -31,6 +58,10 @@ class Player {
         this._color = color
         this._dead = false
     }
+    die() {
+        this._dead = true
+        canvas.style.setProperty('filter','grayscale(1) blur(5px)')
+    }
     jump() {
         if (this._vy <= 10) {
             this._vy = 19;
@@ -38,7 +69,7 @@ class Player {
     }
     tick(obstacles) {
         if (this._vy > this.y || (this.y+this._vy >= canvas.height && this._vy < 0)) {
-            this._dead = true
+            this.die()
         } else {
             this.y -= this._vy
         }
@@ -50,24 +81,25 @@ class Player {
         // Collision detection
         // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
         for (var obstacle of obstacles) {
-            if (
-                // Box 1 (top part)
-                (player.x < obstacle.x &&
-                player.x + player._size > obstacle.x-obstacle.width &&
-                player.y < obstacle.y-117 &&
-                player.y + player._size > 0)
-                || // or it collides with...
-                // Box 2 (bottom part)
-                (player.x < obstacle.x &&
-                player.x + player._size > obstacle.x-obstacle.width &&
-                player.y < canvas.height &&
-                player.y + player._size > obstacle.y+117)
-            ) {
-                obstacle._color = '#545454'
-                this._color = '#a29f92'
-                this._dead = true
-                break
+            if (obstacle.x > player.x) {
+                if (
+                    // Box 1 (top part)
+                    (player.x < obstacle.x &&
+                    player.x + player._size > obstacle.x-obstacle.width &&
+                    player.y < obstacle.y-105 &&
+                    player.y + player._size > 0)
+                    || // or it collides with...
+                    // Box 2 (bottom part)
+                    (player.x < obstacle.x &&
+                    player.x + player._size > obstacle.x-obstacle.width &&
+                    player.y < canvas.height &&
+                    player.y + player._size > obstacle.y+105)
+                ) {
+                    this.die()
+                    break
+                }
             }
+
         }
 
     }
@@ -90,15 +122,16 @@ class Obstacle {
     }
     draw() {
         ctx.fillStyle = this._color
-        ctx.fillRect(this.x-this.width,0,this.width,this.y-115)
-        ctx.fillRect(this.x-this.width,this.y+115,this.width,canvas.height)
+        ctx.fillRect(this.x-this.width,0,this.width,this.y-105)
+        ctx.fillRect(this.x-this.width,this.y+105,this.width,canvas.height)
     }
 }
 
 function resetScene() {
+    canvas.style.setProperty('filter','none')
     obstacles = []
-    for (var i = 2; i <= 5; i++) {
-        obstacles.unshift(new Obstacle(canvas.width/4*i, Math.floor(Math.random() * ((canvas.height*3)/4 - canvas.height/4 + 1) + canvas.height/4)))
+    for (var i = 2; i <= 4; i++) {
+        obstacles.unshift(new Obstacle(canvas.width/3*i, Math.floor(Math.random() * ((canvas.height*3)/4 - canvas.height/4 + 1) + canvas.height/4)))
     }
 
     player = new Player(obstacles[obstacles.length-1].y-80,60,'#ffe135')
@@ -110,7 +143,14 @@ function resetScene() {
 let obstacles
 let player
 let score
-let highscore = 0
+let highscore
+
+if (getCookie('highscore') == undefined) {
+    createCookie('highscore','0')
+    highscore = 0
+} else {
+    highscore = Number(getCookie('highscore'))
+}
 
 resetScene()
 
@@ -124,10 +164,10 @@ canvas.addEventListener('mousedown', function(e) {
 })
 
 document.addEventListener('keydown', function(e) {
-    if ((e.key == ' ' || e.key == 'w' || e.code == "Enter" || e.keyCode == 38) && !player._dead) {
-        player.jump()
-    } else if (player._dead) {
+    if (player._dead) {
         resetScene()
+    } else {
+        player.jump()
     }
 })
 
@@ -166,12 +206,12 @@ function animate() {
                 document.querySelector('#scoreValue').innerText = score
                 if (score > highscore) {
                     highscore = score
+                    createCookie('highscore', highscore.toString())
                     document.querySelector('#highscoreValue').innerText = highscore
                 }
             }
         }
     })
-
 
 
     setTimeout(function () {
